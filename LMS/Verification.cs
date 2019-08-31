@@ -27,7 +27,7 @@ namespace LMS
             SqlDataReader rdr; //SQL Data Reader
             DatabaseConnector DBConn = new DatabaseConnector(); //Database Connection class object
             SqlConnection connection = DBConn.connector(); //Connect to the Database
-
+            GenerateResponses Gr = new GenerateResponses();
 
             //Check if connection is null, if null return internal server error since database is not connected
             if(connection == null)
@@ -59,15 +59,8 @@ namespace LMS
 
             //If Val is null or empty, it means that specific hash doesn't exist and OTP is invalid for that email
             if (string.IsNullOrEmpty(Hash_val))
-            {
-                var InvalidOTPResponse = new BadRequestObjectResult("Invalid OTP"); 
-                InvalidOTPResponse.StatusCode = StatusCodes.Status406NotAcceptable;
+                return Gr.NotAcceptable("Invalid OTP");// Ends if OTP is invalid
 
-                return InvalidOTPResponse;
-            }// Ends if OTP is invalid
-
-            var res = new OkObjectResult("Valid OTP"); //Valid OTP response
-            res.StatusCode = StatusCodes.Status200OK; // Status code 200
 
             //Generate SQL query to delete OTP_Hash from the table
             cmd = new SqlCommand("delete OTP_HASH where OTP_HASH='" + Hash + "'");
@@ -75,7 +68,7 @@ namespace LMS
 
             connection.Close();
             //Return value
-            return res; 
+            return Gr.OkResponse("Valid OTP"); 
         }
 
         

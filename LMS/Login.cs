@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
+using System.Text;
+
 
 namespace LMS
 {
@@ -28,6 +30,19 @@ namespace LMS
             string pswrd_hash = null;
             GenerateResponses Gr = new GenerateResponses();
             SqlDataReader reader;
+            byte[] Hash;
+            SHA256 sha256 = SHA256.Create();
+            Encoding enc = Encoding.UTF8;
+            StringBuilder hashbuilder = new StringBuilder();
+            Hash = sha256.ComputeHash(enc.GetBytes(pswrd));
+
+            foreach(var h in Hash)
+            {
+                hashbuilder.Append(h.ToString("x2"));
+            }
+
+            pswrd = hashbuilder.ToString();
+            
 
             //check if uname or pswrd is null
             if (string.IsNullOrEmpty(uname) || string.IsNullOrEmpty(pswrd))

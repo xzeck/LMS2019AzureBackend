@@ -57,16 +57,9 @@ namespace LMS
 
 
             if (EmailSentAction.Equals(1))
-            {
-                var BadRes = new ObjectResult("Error email cannot be sent");
-                BadRes.StatusCode = StatusCodes.Status419AuthenticationTimeout;
+                return Gr.RequestTimeOut("Error email cannot be sent");
 
-                return BadRes;
-            }
-
-            var res = new ObjectResult("Ok");
-            res.StatusCode = StatusCodes.Status200OK;
-            return res;
+            return Gr.OkResponse("Ok");
         }
 
         public static bool CheckIfUserAlreadyExist(string email)
@@ -79,9 +72,11 @@ namespace LMS
 
             string em = null; 
 
-            SqlCommand cmd = new SqlCommand("select email from users where email=@email");
+            SqlCommand cmd = new SqlCommand("select email from users where email=@email", connection);
 
             cmd.Parameters.AddWithValue("@email", email);
+
+            connection.Open();
 
             reader = cmd.ExecuteReader();
 
@@ -89,6 +84,7 @@ namespace LMS
             {
                 em = reader[0].ToString();
             }
+            connection.Close();
 
             if(!string.IsNullOrEmpty(em))
             {
@@ -108,23 +104,24 @@ namespace LMS
 
             string un = null;
 
-            SqlCommand cmd = new SqlCommand("select uname from users where uname=@uname");
+            SqlCommand cmd = new SqlCommand("select username from users where username=@uname", connection);
 
             cmd.Parameters.AddWithValue("@uname", uname);
 
+            connection.Open();
+
             reader = cmd.ExecuteReader();
+
 
             while (reader.Read())
             {
                 un = reader[0].ToString();
             }
 
+            connection.Close();
             if (!string.IsNullOrEmpty(un))
-            {
                 return true;
-            }
-
-
+           
             return false;
         }
     }

@@ -52,5 +52,13 @@ namespace LMS
 
             return response;
         }
+
+        public ObjectResult RequestTimeOut(string message)
+        {
+            var response = new ObjectResult(message);
+            response.StatusCode = StatusCodes.Status419AuthenticationTimeout;
+
+            return response;
+        }
     }
 }
