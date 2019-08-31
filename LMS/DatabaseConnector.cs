@@ -8,10 +8,10 @@ namespace LMS
     class DatabaseConnector
     {
         /// <summary>
-        /// connects to the specified database string Catalog : Name of the table you want to use
+        /// connects to the specified database string
         /// </summary>
         /// <returns>SqlConnection</returns>
-       public SqlConnection connector(String Catalog)
+       public SqlConnection connector()
         {
             SqlConnection connection = null; 
             try
@@ -20,7 +20,7 @@ namespace LMS
                 sb.DataSource = "lms2019.database.windows.net"; // database URL
                 sb.UserID = "accessor"; // ID 
                 sb.Password = "LMS2019@"; // Password
-                sb.InitialCatalog = Catalog; // Table name
+                sb.InitialCatalog = "Users"; // Table name
 
                 connection = new SqlConnection(sb.ConnectionString); //connection
 
@@ -30,7 +30,7 @@ namespace LMS
                 Console.WriteLine("Cannot connect to database : " + e); //Throw error if not connected
             }
 
-            return connection;
+            return connection; //return SqlConnection
         }
     }
 }

@@ -25,28 +25,23 @@ namespace LMS
             string uname = req.Query["uname"];
             string pswrd = req.Query["pswrd"];
             string username = null;
-            string pswrd_hash = null; 
-
+            string pswrd_hash = null;
+            GenerateResponses Gr = new GenerateResponses();
+            SqlDataReader reader;
 
             //check if uname or pswrd is null
-            if(string.IsNullOrEmpty(uname) || string.IsNullOrEmpty(pswrd))
+            if (string.IsNullOrEmpty(uname) || string.IsNullOrEmpty(pswrd))
             {
                 return new BadRequestObjectResult("Password or Username Empty");
             }
 
             DatabaseConnector DB_Con = new DatabaseConnector(); //Object for database connector
-            SqlConnection connection = DB_Con.connector("Users"); //Returns a DB connection
+            SqlConnection connection = DB_Con.connector(); //Returns a DB connection
 
             //If connection is not established, send internal server error
             if(connection == null)
-            {
-                var res = new ObjectResult("Internal server error cannot connect to Database");
-                res.StatusCode = StatusCodes.Status500InternalServerError;
+                return Gr.InternalServerError("Internal server error cannot connect to Database"); // Ends if connection to database cannot be established
 
-                return res;
-            }
-            
-            SqlDataReader reader;
 
             connection.Open();
 
@@ -63,7 +58,7 @@ namespace LMS
             connection.Close();
 
             if(string.IsNullOrEmpty(username))
-                return new BadRequestObjectResult("Entered Username doesn't exist");
+                return Gr.BadRequest("Entered Username doesn't exist");
 
             if(pswrd == pswrd_hash)
             {
@@ -72,11 +67,11 @@ namespace LMS
                 string token = tk.GenerateToken();
                 bool token_val = tk.IsTokenValid(token);
 
-                return (ActionResult)new OkObjectResult(token_val);
+                return Gr.OkResponse(token_val.ToString());
 
             }
             else
-                return new BadRequestObjectResult("username or password incorrect");
+                return Gr.BadRequest("username or password incorrect");
         }
     }
 }

@@ -26,23 +26,39 @@ namespace LMS
         {
             log.LogInformation("C# HTTP trigger function processed a request. - Registration");
 
+            GenerateResponses Gr = new GenerateResponses();
+
             string uname = req.Query["uname"];
             string pswrd = req.Query["pswrd"];
             string email = req.Query["email"];
             string fname = req.Query["fname"];
             string dptmt = req.Query["dptmt"];
 
+            //Check if User already exists
+            bool DoesUserExist = CheckIfUserAlreadyExist(email);
 
+            if(DoesUserExist) 
+                return Gr.Forbidden("An account with the email already  exists");
+
+
+            //Check if Username is taken
+            bool IsUserNameTaken = CheckIfUserNameAlreadyExist(uname);
+
+            if(IsUserNameTaken)
+                return Gr.Forbidden("User name already exits,  please enter a different one");
+            
+
+            //Generate OTP
             OTPGen gen = new OTPGen(uname,
                                     email);
             gen.GenerateOTP();
             var EmailSentAction = gen.SendOTP();
-
+            gen.PushHash();
 
 
             if (EmailSentAction.Equals(1))
             {
-                var BadRes = new ObjectResult("Error");
+                var BadRes = new ObjectResult("Error email cannot be sent");
                 BadRes.StatusCode = StatusCodes.Status419AuthenticationTimeout;
 
                 return BadRes;
@@ -52,31 +68,64 @@ namespace LMS
             res.StatusCode = StatusCodes.Status200OK;
             return res;
         }
-        /*
-        public static async Task<IActionResult> Verification(string email, string uname)
+
+        public static bool CheckIfUserAlreadyExist(string email)
         {
-            try
+            DatabaseConnector DBConn = new DatabaseConnector();
+
+            SqlConnection connection = DBConn.connector();
+
+            SqlDataReader reader;
+
+            string em = null; 
+
+            SqlCommand cmd = new SqlCommand("select email from users where email=@email");
+
+            cmd.Parameters.AddWithValue("@email", email);
+
+            reader = cmd.ExecuteReader();
+
+            while(reader.Read())
             {
-                var apiKey = Environment.GetEnvironmentVariable("SENDGRID_APIKEY");
-                var client = new SendGridClient(apiKey);
-
-                var code = OTPGen();
-
-                var from = new EmailAddress("admin@ajaynair.xyz", "Admin");
-                var subject = "Email Verification";
-                var to = new EmailAddress(email, uname);
-                var plainTextContent = "Please use the below code to verify your email";
-                var htmlContent = "<strong>Code : " + code + "</strong>";
-                var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-                var response = await client.SendEmailAsync(msg);
-
-                return new OkObjectResult(0);
-            }catch(Exception e)
-            {
-                Console.WriteLine("Exception - Reg : " + e);
-
-                return new BadRequestObjectResult(-1);
+                em = reader[0].ToString();
             }
-        }*/
+
+            if(!string.IsNullOrEmpty(em))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool  CheckIfUserNameAlreadyExist(string uname)
+        {
+            DatabaseConnector DBConn = new DatabaseConnector();
+
+            SqlConnection connection = DBConn.connector();
+
+            SqlDataReader reader;
+
+            string un = null;
+
+            SqlCommand cmd = new SqlCommand("select uname from users where uname=@uname");
+
+            cmd.Parameters.AddWithValue("@uname", uname);
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                un = reader[0].ToString();
+            }
+
+            if (!string.IsNullOrEmpty(un))
+            {
+                return true;
+            }
+
+
+            return false;
+        }
     }
 }
