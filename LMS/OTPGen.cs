@@ -66,18 +66,20 @@ namespace LMS
 
         public void PushHash()
         {
-            GenerateHash GH = new GenerateHash();
+            GenerateHash GH = new GenerateHash(); // Init GenerateHash
 
-            string hash = GH.Generate(email, OTP);
+            string hash = GH.Generate(email, OTP); // Generate hash from email and OTP
 
-            DatabaseConnector DBConn = new DatabaseConnector();
-            SqlConnection conn = DBConn.connector();
-            //SqlDataAdapter adapter = new SqlDataAdapter();
-            conn.Open();
+            DatabaseConnector DBConn = new DatabaseConnector(); // connect to database
+            SqlConnection conn = DBConn.connector(); // start an SQL connection
+            
 
+            conn.Open(); // Open connection to database
+
+            // Push OTP value to database
             SqlCommand cmd = new SqlCommand("insert into OTP ([OTP_HASH]) values(@hash)", conn);
-            cmd.Parameters.AddWithValue("@hash", hash);
-            int affectedrows = cmd.ExecuteNonQuery();
+            cmd.Parameters.AddWithValue("@hash", hash); 
+            int affectedrows = cmd.ExecuteNonQuery(); // Execute non query
 
             Console.WriteLine(affectedrows);
             

@@ -49,5 +49,34 @@ namespace LMS
             //Return the generated hash as string
             return HashString.ToString();
         }
+
+        public string GenerateSalt()
+        {
+            Guid g = Guid.NewGuid();
+            
+            string GuidString = Convert.ToBase64String(g.ToByteArray());
+
+            string salt = GuidString.Substring(0, 8);
+
+            Console.WriteLine(salt);
+
+            return salt;
+        }
+
+        public string GeneratePasswordHash(string pswrd)
+        {
+            SHA256 sha256 = SHA256.Create();
+            Encoding enc = Encoding.UTF8;
+            StringBuilder hashbuilder = new StringBuilder();
+            byte[] PasswordHash = sha256.ComputeHash(enc.GetBytes(pswrd));
+            string hashedpassword = null; 
+
+            foreach (var h in PasswordHash)
+                hashbuilder.Append(h.ToString("x2"));
+
+            hashedpassword = hashbuilder.ToString();
+
+            return hashedpassword;
+        }
     }
 }

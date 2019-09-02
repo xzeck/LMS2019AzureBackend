@@ -48,15 +48,15 @@ namespace LMS
                 return Gr.Forbidden("User name already exits,  please enter a different one");
             
 
-            //Generate OTP
+            //Initialize OTPGen Class
             OTPGen gen = new OTPGen(uname,
                                     email);
-            gen.GenerateOTP();
-            var EmailSentAction = gen.SendOTP();
-            gen.PushHash();
+            gen.GenerateOTP(); //Generate OTP
+            var EmailSentAction = gen.SendOTP(); //Send Email
+            gen.PushHash(); //Push OTP hash to Database
 
 
-            if (EmailSentAction.Equals(1))
+            if(EmailSentAction.Equals(1))
                 return Gr.RequestTimeOut("Error email cannot be sent");
 
             return Gr.OkResponse("Ok");

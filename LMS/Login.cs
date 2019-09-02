@@ -23,24 +23,28 @@ namespace LMS
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            //getting username
-            string uname = req.Query["uname"];
-            string pswrd = req.Query["pswrd"];
+            
+            string uname = req.Query["uname"];// get username
+            string pswrd = req.Query["pswrd"];// get password
             string username = null;
             string pswrd_hash = null;
-            GenerateResponses Gr = new GenerateResponses();
-            SqlDataReader reader;
-            byte[] Hash;
-            SHA256 sha256 = SHA256.Create();
-            Encoding enc = Encoding.UTF8;
-            StringBuilder hashbuilder = new StringBuilder();
-            Hash = sha256.ComputeHash(enc.GetBytes(pswrd));
+            GenerateResponses Gr = new GenerateResponses();  // Initializing response generator
+            SqlDataReader reader; //Sql Data Reaeder
+            byte[] Hash; // Store hash bytes
+            SHA256 sha256 = SHA256.Create(); // SHA256 generator
+            Encoding enc = Encoding.UTF8; // Encoding method
+            StringBuilder hashbuilder = new StringBuilder();  // hash string builder
 
+
+            Hash = sha256.ComputeHash(enc.GetBytes(pswrd)); // Compute SHA256 hash for password
+            
+            // Convert each value in the hash byte to hex and put inside hashbuilder
             foreach(var h in Hash)
             {
                 hashbuilder.Append(h.ToString("x2"));
             }
 
+            // get the SHA256 hex for the hash
             pswrd = hashbuilder.ToString();
             
 
@@ -58,35 +62,40 @@ namespace LMS
                 return Gr.InternalServerError("Internal server error cannot connect to Database"); // Ends if connection to database cannot be established
 
 
-            connection.Open();
+            connection.Open(); // Open connection to database
 
-            SqlCommand sqlCommand = new SqlCommand("select username, password_hash from Users where username='"+uname+"'", connection);
+            // SQL query to get username
+            SqlCommand sqlCommand = new SqlCommand("select username, password_hash from Users where username=@uname", connection);
+            sqlCommand.Parameters.AddWithValue("@uname", uname);
 
-            reader = sqlCommand.ExecuteReader();
+            reader = sqlCommand.ExecuteReader(); // Execute query and read data
 
+            // Get username and password
             while (reader.Read())
             {
                 username = reader[0].ToString();
                 pswrd_hash = reader[1].ToString();
             }
 
-            connection.Close();
+            connection.Close(); // Close connection to database
 
+            // Check if username is empty
             if(string.IsNullOrEmpty(username))
                 return Gr.BadRequest("Entered Username doesn't exist");
 
+            // Check the password with password hash and generate token
             if(pswrd == pswrd_hash)
             {
-                Token tk = new Token();
+                Token tk = new Token(); // Init token class
 
-                string token = tk.GenerateToken();
-                bool token_val = tk.IsTokenValid(token);
+                string token = tk.GenerateToken(); // Generate token and store
+                bool token_val = tk.IsTokenValid(token); // check if token is valid
 
-                return Gr.OkResponse(token_val.ToString());
+                return Gr.OkResponse(token_val.ToString()); // return token value if token is valid
 
             }
             else
-                return Gr.BadRequest("username or password incorrect");
+                return Gr.BadRequest("username or password incorrect"); // return if password is incorrect
         }
     }
 }
