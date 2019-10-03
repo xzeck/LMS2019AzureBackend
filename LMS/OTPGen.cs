@@ -13,8 +13,8 @@ using SendGrid;
 using SendGrid.Helpers;
 using SendGrid.Helpers.Mail;
 using System.Text;
-using System.Data.SqlClient;
-
+using System.Net.Mail;
+using System.Net.Mime;
 
 namespace LMS
 {
@@ -47,11 +47,17 @@ namespace LMS
                 var client = new SendGridClient(apiKey); //Initialize client
 
                 var from = new EmailAddress("admin@ajaynair.xyz", "Admin"); //From email address and recipient name
-                var subject = "Email Verification"; //Email Subject
+                var subject = "no reply"; //Email Subject
                 var to = new EmailAddress(email, uname); //To emeail address and recipient name
-                var plainTextContent = "Please use the below code to verify your email"; //Plain text
-                var htmlContent = "<strong>Code : " + OTP + "</strong>"; //HTML for the email
+                var plainTextContent = ""; //Plain text
+
+
+                var htmlContent = Properties.Resources.HTML.ToString();
+                htmlContent = htmlContent.Replace("{code}", OTP);
+                
+
                 var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent); //Generate email
+
                 var response = await client.SendEmailAsync(msg); //Send email
 
                 return new OkObjectResult(0);
@@ -68,10 +74,10 @@ namespace LMS
         {
             GenerateHash GH = new GenerateHash(); // Init GenerateHash
 
-            string hash = GH.Generate(email, OTP); // Generate hash from email and OTP
+            string hash = GH.Generate(email+OTP); // Generate hash from email and OTP
 
             DatabaseConnector DBConn = new DatabaseConnector(); // connect to database
-            SqlConnection conn = DBConn.connector(); // start an SQL connection
+            SqlConnection conn = DBConn.connector("Users"); // start an SQL connection
             
 
             conn.Open(); // Open connection to database

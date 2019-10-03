@@ -8,10 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Data.SqlClient;
-using System.Data;
-using SendGrid;
-using SendGrid.Helpers;
-using SendGrid.Helpers.Mail;
 
 
 namespace LMS
@@ -34,18 +30,28 @@ namespace LMS
             string fname = req.Query["fname"];
             string dptmt = req.Query["dptmt"];
 
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+
+            email = email ?? data?.email;
+            uname = uname ?? data?.uname;
+            pswrd = pswrd ?? data?.pswrd;
+            fname = fname ?? data?.fname;
+            dptmt = dptmt ?? data?.dptmt;
+
             //Check if User already exists
             bool DoesUserExist = CheckIfUserAlreadyExist(email);
 
             if(DoesUserExist) 
-                return Gr.Forbidden("An account with the email already  exists");
+                return Gr.Forbidden("An account with the email already  exists"); 
 
 
             //Check if Username is taken
             bool IsUserNameTaken = CheckIfUserNameAlreadyExist(uname);
 
             if(IsUserNameTaken)
-                return Gr.Forbidden("User name already exits,  please enter a different one");
+                return Gr.Forbidden("User name already exits,  please enter a different one"); 
             
 
             //Initialize OTPGen Class
@@ -57,7 +63,7 @@ namespace LMS
 
 
             if(EmailSentAction.Equals(1))
-                return Gr.RequestTimeOut("Error email cannot be sent");
+                return Gr.RequestTimeOut("Error email cannot be sent"); 
 
             return Gr.OkResponse("Ok");
         }
@@ -66,14 +72,15 @@ namespace LMS
         {
             DatabaseConnector DBConn = new DatabaseConnector();
 
-            SqlConnection connection = DBConn.connector();
+            SqlConnection connection = DBConn.connector("Users");
 
             SqlDataReader reader;
 
-            string em = null; 
+            string em = null;
 
             SqlCommand cmd = new SqlCommand("select email from users where email=@email", connection);
 
+            Console.WriteLine("\n" + email);
             cmd.Parameters.AddWithValue("@email", email);
 
             connection.Open();
@@ -98,16 +105,15 @@ namespace LMS
         {
             DatabaseConnector DBConn = new DatabaseConnector();
 
-            SqlConnection connection = DBConn.connector();
+            SqlConnection connection = DBConn.connector("Users");
 
             SqlDataReader reader;
 
             string un = null;
 
             SqlCommand cmd = new SqlCommand("select username from users where username=@uname", connection);
-
             cmd.Parameters.AddWithValue("@uname", uname);
-
+            
             connection.Open();
 
             reader = cmd.ExecuteReader();

@@ -23,11 +23,21 @@ namespace LMS
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            
+            Token tk_1 = new Token();
+            tk_1.GenerateToken();
+
             string uname = req.Query["uname"];// get username
             string pswrd = req.Query["pswrd"];// get password
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+
+            uname = uname ?? data?.uname;
+            pswrd = pswrd ?? data?.pswrd;
+
             string username = null;
             string pswrd_hash = null;
+            string salt = null;
             GenerateResponses Gr = new GenerateResponses();  // Initializing response generator
             SqlDataReader reader; //Sql Data Reaeder
             byte[] Hash; // Store hash bytes
@@ -36,18 +46,6 @@ namespace LMS
             StringBuilder hashbuilder = new StringBuilder();  // hash string builder
 
 
-            Hash = sha256.ComputeHash(enc.GetBytes(pswrd)); // Compute SHA256 hash for password
-            
-            // Convert each value in the hash byte to hex and put inside hashbuilder
-            foreach(var h in Hash)
-            {
-                hashbuilder.Append(h.ToString("x2"));
-            }
-
-            // get the SHA256 hex for the hash
-            pswrd = hashbuilder.ToString();
-            
-
             //check if uname or pswrd is null
             if (string.IsNullOrEmpty(uname) || string.IsNullOrEmpty(pswrd))
             {
@@ -55,17 +53,17 @@ namespace LMS
             }
 
             DatabaseConnector DB_Con = new DatabaseConnector(); //Object for database connector
-            SqlConnection connection = DB_Con.connector(); //Returns a DB connection
+            SqlConnection connection = DB_Con.connector("Users"); //Returns a DB connection
 
             //If connection is not established, send internal server error
-            if(connection == null)
+            if (connection == null)
                 return Gr.InternalServerError("Internal server error cannot connect to Database"); // Ends if connection to database cannot be established
 
 
             connection.Open(); // Open connection to database
 
             // SQL query to get username
-            SqlCommand sqlCommand = new SqlCommand("select username, password_hash from Users where username=@uname", connection);
+            SqlCommand sqlCommand = new SqlCommand("select username, password_hash, salt from Users where username=@uname", connection);
             sqlCommand.Parameters.AddWithValue("@uname", uname);
 
             reader = sqlCommand.ExecuteReader(); // Execute query and read data
@@ -75,23 +73,47 @@ namespace LMS
             {
                 username = reader[0].ToString();
                 pswrd_hash = reader[1].ToString();
+                salt = reader[2].ToString();
             }
 
             connection.Close(); // Close connection to database
 
+            Hash = sha256.ComputeHash(enc.GetBytes(pswrd + salt)); // Compute SHA256 hash for password
+
+            // Convert each value in the hash byte to hex and put inside hashbuilder
+            foreach (var h in Hash)
+            {
+                hashbuilder.Append(h.ToString("x2"));
+            }
+
+            // get the SHA256 hex for the hash
+            pswrd = hashbuilder.ToString();
+
             // Check if username is empty
-            if(string.IsNullOrEmpty(username))
+            if (string.IsNullOrEmpty(username))
                 return Gr.BadRequest("Entered Username doesn't exist");
 
             // Check the password with password hash and generate token
-            if(pswrd == pswrd_hash)
+            if (pswrd == pswrd_hash)
             {
                 Token tk = new Token(); // Init token class
 
                 string token = tk.GenerateToken(); // Generate token and store
-                bool token_val = tk.IsTokenValid(token); // check if token is valid
+                //bool token_val = tk.IsTokenValid(token); // check if token is valid
 
-                return Gr.OkResponse(token_val.ToString()); // return token value if token is valid
+                DatabaseConnector DBConn = new DatabaseConnector();
+                SqlConnection conn = DBConn.connector("Users");
+                //
+                SqlCommand cmd = new SqlCommand("update Users set session_token=@token where username=@uname ", conn);
+                cmd.Parameters.AddWithValue("@uname", username);
+                cmd.Parameters.AddWithValue("@token", token);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+                conn.Close();
+
+
+                return Gr.OkResponse(token.ToString()); // return token value if token is valid
 
             }
             else

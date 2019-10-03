@@ -11,7 +11,7 @@ namespace LMS
         /// connects to the specified database string
         /// </summary>
         /// <returns>SqlConnection</returns>
-       public SqlConnection connector()
+       public SqlConnection connector(String Catalog)
         {
             SqlConnection connection = null; 
             try
@@ -20,7 +20,7 @@ namespace LMS
                 sb.DataSource = "lms2019.database.windows.net"; // database URL
                 sb.UserID = "accessor"; // ID 
                 sb.Password = "LMS2019@"; // Password
-                sb.InitialCatalog = "Users"; // Table name
+                sb.InitialCatalog = Catalog; // Table name
 
                 connection = new SqlConnection(sb.ConnectionString); //connection
 

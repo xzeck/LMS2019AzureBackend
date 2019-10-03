@@ -7,11 +7,14 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Data.SqlClient;
 
 namespace LMS
 {
     public static class Apply
     {
+        private const string InternalServerError = "Internal server error";
+
         [FunctionName("Apply")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
@@ -19,11 +22,73 @@ namespace LMS
         {
             log.LogInformation("C# HTTP trigger function processed a request. - Apply");
 
-            var res = new OkObjectResult("Ok");
-            res.StatusCode = StatusCodes.Status200OK;
+            GenerateResponses Gr = new GenerateResponses();
 
-            return res;
+            DateTime From = Convert.ToDateTime(req.Query["from"]);
+            DateTime To = Convert.ToDateTime(req.Query["to"]);
 
+            string Reason = req.Query["reason"];
+            string Session_Token = req.Query["token"];
+            string Type = req.Query["type"];
+
+            string uname = null;
+            string department = null;
+            
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+
+            //From = From.ToString() ?? data?.From;
+            //To = To.ToString() ?? data?.To;
+
+            Reason = Reason ?? data?.Reason;
+            Session_Token = Session_Token ?? data?.Session_Token;
+            Type = Type ?? data?.type;
+
+
+            DatabaseConnector DBconn = new DatabaseConnector();
+            SqlConnection connection = DBconn.connector("Users");
+            GenerateHash GH = new GenerateHash();
+            SqlDataReader reader;
+
+            SqlCommand command_Retrieve_Uname_Dept = new SqlCommand("select username, department from Users where session_token=@token",connection);
+            command_Retrieve_Uname_Dept.Parameters.AddWithValue("@token", Session_Token);
+
+            connection.Open();
+
+            reader = command_Retrieve_Uname_Dept.ExecuteReader();
+
+            while(reader.Read())
+            {
+                uname = reader[0].ToString();
+                department = reader[1].ToString();
+            }
+
+            connection.Close();
+
+            if (string.IsNullOrEmpty(uname) || string.IsNullOrEmpty(department))
+                return Gr.InternalServerError(InternalServerError);
+
+
+            var LeaveDays = (To - From).TotalDays;
+            var LeaveID = department + GH.GenerateSalt();
+
+            connection.Open();
+
+            SqlCommand command_Push_Data_Into_Leave = new SqlCommand("insert into leaveapplication values (@LeaveID, @From, @To, @Days, @Reason, @Type, @uname)", connection);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@LeaveID", LeaveID);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@From"   , From);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@To"     , To);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@Days"   , LeaveDays);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@Reason" , Reason);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@Type"   , Type);
+            command_Push_Data_Into_Leave.Parameters.AddWithValue("@uname"  , uname);
+
+            command_Push_Data_Into_Leave.ExecuteNonQuery();
+
+            connection.Close();
+
+            return Gr.OkResponse("Ok");
         }
     }
 }
