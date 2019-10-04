@@ -22,16 +22,14 @@ namespace LMS
             return token;
         }
 
-        public Boolean IsTokenValid(string token)
+        public bool IsTokenValid(string token)
         {
             byte[] data= Convert.FromBase64String(token);
 
             DateTime token_gen_time = DateTime.FromBinary(BitConverter.ToInt64(data, 0)); 
 
-            if(token_gen_time < DateTime.UtcNow.AddHours(-24))
-            {
+            if(token_gen_time < DateTime.UtcNow.AddMinutes(20))
                 return false;
-            }
             else
                 return true;
             

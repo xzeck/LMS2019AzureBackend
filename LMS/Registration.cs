@@ -78,7 +78,7 @@ namespace LMS
 
             string em = null;
 
-            SqlCommand cmd = new SqlCommand("select email from users where email=@email", connection);
+            SqlCommand cmd = new SqlCommand("select email from Users where email=@email", connection);
 
             Console.WriteLine("\n" + email);
             cmd.Parameters.AddWithValue("@email", email);
@@ -111,7 +111,7 @@ namespace LMS
 
             string un = null;
 
-            SqlCommand cmd = new SqlCommand("select username from users where username=@uname", connection);
+            SqlCommand cmd = new SqlCommand("select username from Users where username=@uname", connection);
             cmd.Parameters.AddWithValue("@uname", uname);
             
             connection.Open();

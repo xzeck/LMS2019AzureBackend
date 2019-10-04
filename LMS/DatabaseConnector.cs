@@ -28,6 +28,8 @@ namespace LMS
             }catch(Exception e)
             {
                 Console.WriteLine("Cannot connect to database : " + e); //Throw error if not connected
+
+
             }
 
             return connection; //return SqlConnection

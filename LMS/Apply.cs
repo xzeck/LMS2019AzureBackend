@@ -24,8 +24,10 @@ namespace LMS
 
             GenerateResponses Gr = new GenerateResponses();
 
-            DateTime From = Convert.ToDateTime(req.Query["from"]);
-            DateTime To = Convert.ToDateTime(req.Query["to"]);
+            string s_From = req.Query["from"];
+            string s_To   = req.Query["to"];
+
+           
 
             string Reason = req.Query["reason"];
             string Session_Token = req.Query["token"];
@@ -38,11 +40,15 @@ namespace LMS
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            //From = From.ToString() ?? data?.From;
-            //To = To.ToString() ?? data?.To;
+            s_From = s_From ?? data?.from;
+            s_To = s_To ?? data?.to;
 
-            Reason = Reason ?? data?.Reason;
-            Session_Token = Session_Token ?? data?.Session_Token;
+            DateTime From = DateTime.ParseExact(s_From, "dd/MM/yyyy", null);
+            DateTime To   = DateTime.ParseExact(s_To, "dd/MM/yyyy", null);
+
+
+            Reason = Reason ?? data?.reason;
+            Session_Token = Session_Token ?? data?.token;
             Type = Type ?? data?.type;
 
 
@@ -75,7 +81,7 @@ namespace LMS
 
             connection.Open();
 
-            SqlCommand command_Push_Data_Into_Leave = new SqlCommand("insert into leaveapplication values (@LeaveID, @From, @To, @Days, @Reason, @Type, @uname)", connection);
+            SqlCommand command_Push_Data_Into_Leave = new SqlCommand("insert into leaveapplication(leave_id, from_date, to_date, no_of_days, reason, leave_type, username) values (@LeaveID, @From, @To, @Days, @Reason, @Type, @uname)", connection);
             command_Push_Data_Into_Leave.Parameters.AddWithValue("@LeaveID", LeaveID);
             command_Push_Data_Into_Leave.Parameters.AddWithValue("@From"   , From);
             command_Push_Data_Into_Leave.Parameters.AddWithValue("@To"     , To);
