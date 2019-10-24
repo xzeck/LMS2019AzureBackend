@@ -7,8 +7,6 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Data.SqlClient;
-using System.Security.Cryptography;
-using System.Text;
 using Newtonsoft.Json;
 
 namespace LMS

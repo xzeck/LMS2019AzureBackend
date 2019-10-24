@@ -13,6 +13,14 @@ namespace LMS
 {
     class GenerateResponses
     {
+        public string OKRESP = "Ok";
+        public string INTSRE = "Internal Server Error";
+        public string NTACPT = "Not Acceptable";
+        public string FRBIDN = "Forbidden";
+        public string BADREQ = "Bad Request";
+        public string REQTIO = "Request Time Out";
+
+       
         public ObjectResult OkResponse(string message)
         {
             var response = new ObjectResult(message); 
@@ -60,5 +68,6 @@ namespace LMS
 
             return response;
         }
+
     }
 }

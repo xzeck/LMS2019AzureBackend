@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Data.SqlClient;
+
 
 namespace LMS
 {
@@ -28,11 +30,32 @@ namespace LMS
 
             DateTime token_gen_time = DateTime.FromBinary(BitConverter.ToInt64(data, 0)); 
 
-            if(token_gen_time < DateTime.UtcNow.AddMinutes(20))
+            if(token_gen_time < DateTime.UtcNow.AddHours(1))
                 return false;
             else
                 return true;
             
+        }
+
+        public void DeleteToken(string token)
+        {
+            DatabaseConnector DBConn = new DatabaseConnector();
+            SqlConnection connection = DBConn.connector("Users");
+
+            SqlCommand cmd = new SqlCommand("Update Users set session_token=null where session_token=@token");
+            cmd.Parameters.AddWithValue("@token", token);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            
+
+
         }
     }
 }

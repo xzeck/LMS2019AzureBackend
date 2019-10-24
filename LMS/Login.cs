@@ -38,6 +38,8 @@ namespace LMS
             string username = null;
             string pswrd_hash = null;
             string salt = null;
+            string flag = null;
+            
             GenerateResponses Gr = new GenerateResponses();  // Initializing response generator
             SqlDataReader reader; //Sql Data Reaeder
             byte[] Hash; // Store hash bytes
@@ -63,7 +65,7 @@ namespace LMS
             connection.Open(); // Open connection to database
 
             // SQL query to get username
-            SqlCommand sqlCommand = new SqlCommand("select username, password_hash, salt from Users where username=@uname", connection);
+            SqlCommand sqlCommand = new SqlCommand("select username, password_hash, salt, flag from Users where username=@uname", connection);
             sqlCommand.Parameters.AddWithValue("@uname", uname);
 
             reader = sqlCommand.ExecuteReader(); // Execute query and read data
@@ -74,6 +76,7 @@ namespace LMS
                 username = reader[0].ToString();
                 pswrd_hash = reader[1].ToString();
                 salt = reader[2].ToString();
+                flag = reader[3].ToString();
             }
 
             connection.Close(); // Close connection to database
@@ -112,8 +115,10 @@ namespace LMS
                 cmd.ExecuteNonQuery();
                 conn.Close();
 
+                string[] DataToReturn = { token.ToString(), flag.ToString() };
 
-                return Gr.OkResponse(token.ToString()); // return token value if token is valid
+                var json = JsonConvert.SerializeObject(DataToReturn);
+                return Gr.OkResponse(json); // return token value if token is valid
 
             }
             else
